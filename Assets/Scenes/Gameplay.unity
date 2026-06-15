@@ -11541,7 +11541,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: pickupRadius
-      value: 0.6
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: maxChargeTime
@@ -11553,7 +11553,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: pickupDistance
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: shootUpwardSpeed

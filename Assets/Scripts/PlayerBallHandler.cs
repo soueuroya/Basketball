@@ -43,6 +43,7 @@ public class PlayerBallHandler : MonoBehaviour
     private Coroutine fieldOfViewReturnCoroutine;
 
     public bool HasBall => heldBall != null;
+    public bool IsThrowing => isThrowing;
 
     private void Awake()
     {
@@ -56,6 +57,7 @@ public class PlayerBallHandler : MonoBehaviour
             anim = GetComponent<Animator>();
         }
 
+        ResetAnimatorTriggers();
         SetCameraFieldOfView(normalFieldOfView);
     }
 
@@ -134,7 +136,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         if (anim != null)
         {
-            anim.SetTrigger("Charge");
+            SetAnimatorTrigger("Charge");
         }
     }
 
@@ -169,15 +171,19 @@ public class PlayerBallHandler : MonoBehaviour
 
     private Ball FindLookedAtBall(float distance)
     {
-        if (heldBall != null || playerCamera == null)
+        if (heldBall != null || (playerAim == null && playerCamera == null))
         {
             return null;
         }
 
+        Ray aimRay = playerCamera != null
+            ? playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f))
+            : new Ray(playerAim.position, playerAim.forward);
+
         if (!Physics.SphereCast(
-                playerCamera.transform.position,
+                aimRay.origin,
                 pickupRadius,
-                playerCamera.transform.forward,
+                aimRay.direction,
                 out RaycastHit hit,
                 distance,
                 pickupLayers,
@@ -228,7 +234,7 @@ public class PlayerBallHandler : MonoBehaviour
         {
             anim.SetBool("OnReach", false);
             anim.SetBool("Calling", false);
-            anim.SetTrigger("Pickup");
+            SetAnimatorTrigger("Pickup");
         }
     }
 
@@ -241,7 +247,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         if (anim != null)
         {
-            anim.SetTrigger("Shoot");
+            SetAnimatorTrigger("Shoot");
         }
 
         //perlinNoise.AmplitudeGain = 1 + (chargeAmount * 2);
@@ -325,6 +331,24 @@ public class PlayerBallHandler : MonoBehaviour
         fieldOfViewReturnCoroutine = null;
     }
 
+    private void ResetAnimatorTriggers()
+    {
+        if (anim == null)
+        {
+            return;
+        }
+
+        anim.ResetTrigger("Pickup");
+        anim.ResetTrigger("Charge");
+        anim.ResetTrigger("Shoot");
+    }
+
+    private void SetAnimatorTrigger(string triggerName)
+    {
+        ResetAnimatorTriggers();
+        anim.SetTrigger(triggerName);
+    }
+
     private void OnDisable()
     {
         isCharging = false;
@@ -336,6 +360,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         if (anim != null)
         {
+            ResetAnimatorTriggers();
             anim.SetBool("OnReach", false);
             anim.SetBool("Calling", false);
         }
