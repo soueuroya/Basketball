@@ -26,6 +26,9 @@ public class HoopPassChecker : MonoBehaviour
     [SerializeField] private BallEvent onScored;
     [SerializeField] private BallEvent onReversePass;
 
+    [Header("Score Effect")]
+    [SerializeField] private ParticleSystem scoreParticles;
+
     [Header("Debug")]
     [SerializeField] private bool logPasses = true;
     [SerializeField, Min(0.1f)] private float sequenceTimeout = 2f;
@@ -76,6 +79,7 @@ public class HoopPassChecker : MonoBehaviour
         if (pass.State == PassState.EnteredTop)
         {
             ScoreCount++;
+            PlayScoreEffect();
             onScored?.Invoke(ball);
 
             if (logPasses)
@@ -92,6 +96,17 @@ public class HoopPassChecker : MonoBehaviour
             State = PassState.EnteredBottom,
             StartedAt = Time.time
         };
+    }
+
+    private void PlayScoreEffect()
+    {
+        if (scoreParticles == null)
+        {
+            return;
+        }
+
+        scoreParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        scoreParticles.Play(true);
     }
 
     public void ForgetBall(Ball ball)

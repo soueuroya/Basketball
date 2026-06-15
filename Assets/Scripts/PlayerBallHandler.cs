@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Cinemachine;
 using UnityEngine;
 
 public class PlayerBallHandler : MonoBehaviour
@@ -19,6 +20,8 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField, Min(0f)] private float shootUpwardSpeed = 5f;
     [SerializeField, Min(0f)] private float maxShootUpwardSpeed = 7f;
     [SerializeField, Min(0f)] private float throwReleaseDelay = 0.5f;
+
+    [SerializeField] CinemachineBasicMultiChannelPerlin perlinNoise;
 
     private Ball heldBall;
     private Ball reachableBall;
@@ -142,6 +145,8 @@ public class PlayerBallHandler : MonoBehaviour
             anim.SetTrigger("Shoot");
         }
 
+        perlinNoise.AmplitudeGain = 1 + (chargeAmount * 3);
+         
         Vector3 aimDirection = playerAim != null
             ? playerAim.transform.forward
             : transform.forward;
@@ -170,6 +175,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         ball.Release(velocity);
         heldBall = null;
+        perlinNoise.AmplitudeGain = 0f;
         isThrowing = false;
     }
 

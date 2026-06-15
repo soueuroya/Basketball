@@ -3,6 +3,9 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Ball : MonoBehaviour
 {
+    [SerializeField] private TrailRenderer trailRenderer;
+    [SerializeField, Min(0f)] private float trailSpeedThreshold = 8f;
+
     private Rigidbody ballRigidbody;
     private Collider[] ballColliders;
     private Transform holdPoint;
@@ -13,6 +16,24 @@ public class Ball : MonoBehaviour
     {
         ballRigidbody = GetComponent<Rigidbody>();
         ballColliders = GetComponentsInChildren<Collider>();
+
+        if (trailRenderer == null)
+        {
+            trailRenderer = GetComponentInChildren<TrailRenderer>();
+        }
+
+        SetTrailEmission(false, true);
+    }
+
+    private void Update()
+    {
+        bool shouldEmit =
+            !IsHeld &&
+            !ballRigidbody.isKinematic &&
+            ballRigidbody.linearVelocity.sqrMagnitude >=
+            trailSpeedThreshold * trailSpeedThreshold;
+
+        SetTrailEmission(shouldEmit);
     }
 
     private void LateUpdate()
@@ -37,6 +58,7 @@ public class Ball : MonoBehaviour
         ballRigidbody.isKinematic = true;
         ballRigidbody.useGravity = false;
         SetCollidersEnabled(false);
+        SetTrailEmission(false, true);
 
         transform.SetParent(holdPoint, false);
         transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -56,6 +78,21 @@ public class Ball : MonoBehaviour
         ballRigidbody.isKinematic = false;
         ballRigidbody.useGravity = true;
         ballRigidbody.linearVelocity = velocity;
+    }
+
+    private void SetTrailEmission(bool shouldEmit, bool clear = false)
+    {
+        if (trailRenderer == null)
+        {
+            return;
+        }
+
+        trailRenderer.emitting = shouldEmit;
+
+        if (clear)
+        {
+            trailRenderer.Clear();
+        }
     }
 
     private void SetCollidersEnabled(bool enabled)
