@@ -29,6 +29,7 @@ public class FirstPersonPlayerController : MonoBehaviour
     private bool isGrounded;
     private float defaultFixedDeltaTime;
     private float ignoreGroundUntil;
+    private readonly RaycastHit[] groundHits = new RaycastHit[8];
 
     private void Awake()
     {
@@ -48,6 +49,12 @@ public class FirstPersonPlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayManager.IsPaused)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
         moveInput = new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
@@ -116,10 +123,11 @@ public class FirstPersonPlayerController : MonoBehaviour
         float halfHeight = Mathf.Max(capsule.height * 0.5f, radius);
         Vector3 origin = center + Vector3.down * (halfHeight - radius);
 
-        RaycastHit[] hits = Physics.SphereCastAll(
+        int hitCount = Physics.SphereCastNonAlloc(
             origin,
             radius,
             Vector3.down,
+            groundHits,
             groundCheckDistance,
             groundLayers,
             QueryTriggerInteraction.Ignore
@@ -127,8 +135,10 @@ public class FirstPersonPlayerController : MonoBehaviour
 
         isGrounded = false;
 
-        foreach (RaycastHit hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            RaycastHit hit = groundHits[i];
+
             if (hit.collider.transform.root == transform.root)
             {
                 continue;

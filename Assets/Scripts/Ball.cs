@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 public class Ball : MonoBehaviour
 {
+    private static readonly List<Ball> activeBalls = new();
+
     [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField, Min(0f)] private float trailSpeedThreshold = 8f;
 
@@ -22,8 +25,10 @@ public class Ball : MonoBehaviour
     private Collider[] ballColliders;
     private Transform holdPoint;
     private float nextImpactSoundTime;
+    private bool isTrailEmitting;
 
     public bool IsHeld { get; private set; }
+    public static IReadOnlyList<Ball> ActiveBalls => activeBalls;
 
     private void Awake()
     {
@@ -41,6 +46,19 @@ public class Ball : MonoBehaviour
         }
 
         SetTrailEmission(false, true);
+    }
+
+    private void OnEnable()
+    {
+        if (!activeBalls.Contains(this))
+        {
+            activeBalls.Add(this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        activeBalls.Remove(this);
     }
 
     private void Update()
@@ -82,7 +100,7 @@ public class Ball : MonoBehaviour
         transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
     }
 
-    public void Release(Vector3 velocity)
+    public void Release(Vector3 velocity, Vector3 angularVelocity)
     {
         if (!IsHeld)
         {
@@ -96,6 +114,7 @@ public class Ball : MonoBehaviour
         ballRigidbody.isKinematic = false;
         ballRigidbody.useGravity = true;
         ballRigidbody.linearVelocity = velocity;
+        ballRigidbody.angularVelocity = angularVelocity;
     }
 
     public void AttractTowards(Vector3 target, float acceleration, float maxSpeed)
@@ -118,6 +137,13 @@ public class Ball : MonoBehaviour
         ballRigidbody.linearVelocity = Vector3.ClampMagnitude(
             ballRigidbody.linearVelocity,
             maxSpeed);
+    }
+
+    public Vector3 ClosestPoint(Vector3 position)
+    {
+        return ballColliders.Length > 0
+            ? ballColliders[0].ClosestPoint(position)
+            : transform.position;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -172,7 +198,11 @@ public class Ball : MonoBehaviour
             return;
         }
 
-        trailRenderer.emitting = shouldEmit;
+        if (isTrailEmitting != shouldEmit)
+        {
+            isTrailEmitting = shouldEmit;
+            trailRenderer.emitting = shouldEmit;
+        }
 
         if (clear)
         {

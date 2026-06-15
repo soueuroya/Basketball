@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField, Min(0f)] private float maxShootUpwardSpeed = 7f;
     [SerializeField, Min(0f)] private float throwReleaseDelay = 0.5f;
     [SerializeField, Range(0f, 1f)] private float playerVelocityTransfer = 0.5f;
+    [SerializeField, Min(0f)] private float throwBackspin = 12f;
 
     [Header("Ball Magnet")]
     [SerializeField, Min(0.1f)] private float magnetDistance = 15f;
@@ -31,6 +33,9 @@ public class PlayerBallHandler : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool drawInteractionGizmos = true;
+
+    [Header("Performance")]
+    [SerializeField, Range(0.01f, 0.25f)] private float targetingInterval = 0.05f;
 
     [Header("Charge Camera")]
     [SerializeField, Min(1f)] private float normalFieldOfView = 70f;
@@ -45,7 +50,10 @@ public class PlayerBallHandler : MonoBehaviour
     private bool isCharging;
     private bool isThrowing;
     private float chargeStartedAt;
+    private float nextTargetingTime;
     private Coroutine fieldOfViewReturnCoroutine;
+    private bool animatorOnReach;
+    private bool animatorCalling;
 
     public bool HasBall => heldBall != null;
     public bool IsThrowing => isThrowing;
@@ -73,6 +81,11 @@ public class PlayerBallHandler : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayManager.IsPaused)
+        {
+            return;
+        }
+
         UpdateReachableBall();
 
         if (isThrowing)
@@ -157,8 +170,9 @@ public class PlayerBallHandler : MonoBehaviour
             targetedBall != null &&
             !targetedBall.IsHeld;
 
-        if (!keepMagnetTarget)
+        if (!keepMagnetTarget && Time.unscaledTime >= nextTargetingTime)
         {
+            nextTargetingTime = Time.unscaledTime + targetingInterval;
             targetedBall = FindLookedAtBall(magnetDistance);
         }
 
@@ -171,10 +185,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         reachableBall = nextBall;
 
-        if (anim != null)
-        {
-            anim.SetBool("OnReach", reachableBall != null);
-        }
+        SetAnimatorBool("OnReach", reachableBall != null, ref animatorOnReach);
     }
 
     private Ball FindLookedAtBall(float distance)
@@ -184,21 +195,21 @@ public class PlayerBallHandler : MonoBehaviour
             return null;
         }
 
-        Collider[] colliders = Physics.OverlapSphere(
-            playerCamera.transform.position,
-            distance,
-            pickupLayers,
-            QueryTriggerInteraction.Ignore);
-
         Ball bestBall = null;
         float bestScreenDistance = float.PositiveInfinity;
         Vector2 screenCenter = new Vector2(0.5f, 0.5f);
+        float maxDistanceSqr = distance * distance;
+        IReadOnlyList<Ball> balls = Ball.ActiveBalls;
 
-        foreach (Collider candidate in colliders)
+        for (int i = 0; i < balls.Count; i++)
         {
-            Ball ball = candidate.GetComponentInParent<Ball>();
+            Ball ball = balls[i];
 
-            if (ball == null || ball.IsHeld || ball == bestBall)
+            if (ball == null ||
+                ball.IsHeld ||
+                (pickupLayers.value & (1 << ball.gameObject.layer)) == 0 ||
+                (ball.transform.position - playerCamera.transform.position)
+                    .sqrMagnitude > maxDistanceSqr)
             {
                 continue;
             }
@@ -237,10 +248,7 @@ public class PlayerBallHandler : MonoBehaviour
     {
         Transform pickupOrigin =
             ballHoldPoint != null ? ballHoldPoint : transform;
-        Collider ballCollider = ball.GetComponentInChildren<Collider>();
-        Vector3 closestPoint = ballCollider != null
-            ? ballCollider.ClosestPoint(pickupOrigin.position)
-            : ball.transform.position;
+        Vector3 closestPoint = ball.ClosestPoint(pickupOrigin.position);
 
         return (closestPoint - pickupOrigin.position).sqrMagnitude <=
             pickupDistance * pickupDistance;
@@ -253,10 +261,7 @@ public class PlayerBallHandler : MonoBehaviour
             Input.GetMouseButton(1) &&
             targetedBall != null;
 
-        if (anim != null)
-        {
-            anim.SetBool("Calling", isCalling);
-        }
+        SetAnimatorBool("Calling", isCalling, ref animatorCalling);
 
         if (!isCalling)
         {
@@ -278,8 +283,8 @@ public class PlayerBallHandler : MonoBehaviour
 
         if (anim != null)
         {
-            anim.SetBool("OnReach", false);
-            anim.SetBool("Calling", false);
+            SetAnimatorBool("OnReach", false, ref animatorOnReach);
+            SetAnimatorBool("Calling", false, ref animatorCalling);
             SetAnimatorTrigger("Pickup");
         }
     }
@@ -322,16 +327,28 @@ public class PlayerBallHandler : MonoBehaviour
         }
 
         isThrowing = true;
-        StartCoroutine(ReleaseBallAfterDelay(ballToShoot, shotVelocity));
+        Vector3 angularVelocity = transform.right * -throwBackspin;
+        StartCoroutine(ReleaseBallAfterDelay(
+            ballToShoot,
+            shotVelocity,
+            angularVelocity));
     }
 
-    private IEnumerator ReleaseBallAfterDelay(Ball ball, Vector3 velocity)
+    private IEnumerator ReleaseBallAfterDelay(
+        Ball ball,
+        Vector3 velocity,
+        Vector3 angularVelocity)
     {
         yield return new WaitForSeconds(throwReleaseDelay);
 
-        ball.Release(velocity);
+        ball.Release(velocity, angularVelocity);
         heldBall = null;
-        perlinNoise.AmplitudeGain = 0f;
+
+        if (perlinNoise != null)
+        {
+            perlinNoise.AmplitudeGain = 0f;
+        }
+
         isThrowing = false;
     }
 
@@ -400,6 +417,20 @@ public class PlayerBallHandler : MonoBehaviour
         anim.SetTrigger(triggerName);
     }
 
+    private void SetAnimatorBool(
+        string parameterName,
+        bool value,
+        ref bool currentValue)
+    {
+        if (anim == null || currentValue == value)
+        {
+            return;
+        }
+
+        currentValue = value;
+        anim.SetBool(parameterName, value);
+    }
+
     private void OnDisable()
     {
         isCharging = false;
@@ -412,8 +443,8 @@ public class PlayerBallHandler : MonoBehaviour
         if (anim != null)
         {
             ResetAnimatorTriggers();
-            anim.SetBool("OnReach", false);
-            anim.SetBool("Calling", false);
+            SetAnimatorBool("OnReach", false, ref animatorOnReach);
+            SetAnimatorBool("Calling", false, ref animatorCalling);
         }
     }
 

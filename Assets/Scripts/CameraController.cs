@@ -22,15 +22,14 @@ public class CameraController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        HandleMouseLook();
-
-        // Unlock cursor with Escape key
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (GameplayManager.IsPaused)
         {
-            Cursor.lockState = CursorLockMode.None;
+            return;
         }
+
+        HandleMouseLook();
     }
 
     private void HandleMouseLook()
@@ -46,5 +45,10 @@ public class CameraController : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -maxLookAngle, maxLookAngle);
 
         transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    public void SetMouseSensitivity(float sensitivity)
+    {
+        mouseSensitivity = sensitivity;
     }
 }
