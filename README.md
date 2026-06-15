@@ -26,7 +26,7 @@ bottom-to-top pass.
 | Hold left click with a ball | Charge throw |
 | Release left click | Throw ball |
 | Hold right click while targeting a ball | Magnetically attract ball |
-| `Escape` | Unlock cursor |
+| `Escape` | Unlock cursor and Pause |
 
 ## Gameplay Feel Improvements
 
@@ -95,6 +95,14 @@ bottom-to-top pass.
 
     Holding jump while airborne smoothly slows time. Releasing jump or landing
     smoothly restores normal speed.
+
+15. **SFX**
+
+   random sound effect volumes, collision strength modifier, and other sound effect modifiers (mute collisions with other balls and player).
+
+16. **Backspin**
+
+   Ball has added backspin rotation on throw, making it more realistic and easier to get successful shots.
 
 ## Additional Systems
 
