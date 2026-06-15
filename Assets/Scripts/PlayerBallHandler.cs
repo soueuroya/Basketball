@@ -10,10 +10,10 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField] private Transform playerAim;
     [SerializeField] private Transform ballHoldPoint;
     [SerializeField] private Animator anim;
+    [SerializeField] private Rigidbody playerRigidbody;
 
     [Header("Ball Interaction")]
     [SerializeField, Min(0.1f)] private float pickupDistance = 3f;
-    [SerializeField, Min(0.01f)] private float pickupRadius = 0.45f;
     [SerializeField] private LayerMask pickupLayers = ~0;
     [SerializeField, Min(0.1f)] private float maxChargeTime = 2f;
     [SerializeField, Min(0f)] private float shootForwardSpeed = 8f;
@@ -21,11 +21,15 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField, Min(0f)] private float shootUpwardSpeed = 5f;
     [SerializeField, Min(0f)] private float maxShootUpwardSpeed = 7f;
     [SerializeField, Min(0f)] private float throwReleaseDelay = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float playerVelocityTransfer = 0.5f;
 
     [Header("Ball Magnet")]
     [SerializeField, Min(0.1f)] private float magnetDistance = 15f;
     [SerializeField, Min(0f)] private float magnetAcceleration = 25f;
     [SerializeField, Min(0f)] private float magnetMaxSpeed = 10f;
+
+    [Header("Debug")]
+    [SerializeField] private bool drawInteractionGizmos = true;
 
     [Header("Charge Camera")]
     [SerializeField, Min(1f)] private float normalFieldOfView = 70f;
@@ -55,6 +59,11 @@ public class PlayerBallHandler : MonoBehaviour
         if (anim == null)
         {
             anim = GetComponent<Animator>();
+        }
+
+        if (playerRigidbody == null)
+        {
+            playerRigidbody = GetComponentInParent<Rigidbody>();
         }
 
         ResetAnimatorTriggers();
@@ -154,9 +163,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         Ball nextBall = null;
 
-        if (targetedBall != null &&
-            Vector3.Distance(transform.position, targetedBall.transform.position) <=
-            pickupDistance)
+        if (targetedBall != null && IsWithinPickupReach(targetedBall))
         {
             nextBall = targetedBall;
         }
@@ -176,24 +183,46 @@ public class PlayerBallHandler : MonoBehaviour
             return null;
         }
 
-        Ray aimRay = playerCamera != null
-            ? playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f))
-            : new Ray(playerAim.position, playerAim.forward);
+        RaycastHit[] hits = Physics.RaycastAll(
+            GetInteractionRay(),
+            distance,
+            pickupLayers,
+            QueryTriggerInteraction.Ignore);
+        System.Array.Sort(
+            hits,
+            (first, second) => first.distance.CompareTo(second.distance));
 
-        if (!Physics.SphereCast(
-                aimRay.origin,
-                pickupRadius,
-                aimRay.direction,
-                out RaycastHit hit,
-                distance,
-                pickupLayers,
-                QueryTriggerInteraction.Ignore))
+        foreach (RaycastHit hit in hits)
         {
-            return null;
+            Ball ball = hit.collider.GetComponentInParent<Ball>();
+
+            if (ball != null && !ball.IsHeld)
+            {
+                return ball;
+            }
         }
 
-        Ball ball = hit.collider.GetComponentInParent<Ball>();
-        return ball != null && !ball.IsHeld ? ball : null;
+        return null;
+    }
+
+    private Ray GetInteractionRay()
+    {
+        return playerCamera != null
+            ? playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f))
+            : new Ray(playerAim.position, playerAim.forward);
+    }
+
+    private bool IsWithinPickupReach(Ball ball)
+    {
+        Transform pickupOrigin =
+            ballHoldPoint != null ? ballHoldPoint : transform;
+        Collider ballCollider = ball.GetComponentInChildren<Collider>();
+        Vector3 closestPoint = ballCollider != null
+            ? ballCollider.ClosestPoint(pickupOrigin.position)
+            : ball.transform.position;
+
+        return (closestPoint - pickupOrigin.position).sqrMagnitude <=
+            pickupDistance * pickupDistance;
     }
 
     private void UpdateBallMagnet()
@@ -213,11 +242,7 @@ public class PlayerBallHandler : MonoBehaviour
             return;
         }
 
-        Transform target = ballHoldPoint != null ? ballHoldPoint : transform;
-        float pickupSqrDistance = pickupDistance * pickupDistance;
-
-        if ((targetedBall.transform.position - target.position).sqrMagnitude <=
-            pickupSqrDistance)
+        if (IsWithinPickupReach(targetedBall))
         {
             PickUp(targetedBall);
             targetedBall = null;
@@ -269,6 +294,11 @@ public class PlayerBallHandler : MonoBehaviour
         Vector3 shotVelocity =
             flatDirection * forwardSpeed +
             Vector3.up * (upwardSpeed + cameraPitchInfluence);
+
+        if (playerRigidbody != null)
+        {
+            shotVelocity += playerRigidbody.linearVelocity * playerVelocityTransfer;
+        }
 
         isThrowing = true;
         StartCoroutine(ReleaseBallAfterDelay(ballToShoot, shotVelocity));
@@ -364,5 +394,37 @@ public class PlayerBallHandler : MonoBehaviour
             anim.SetBool("OnReach", false);
             anim.SetBool("Calling", false);
         }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!drawInteractionGizmos)
+        {
+            return;
+        }
+
+        if (playerCamera == null && playerAim == null)
+        {
+            return;
+        }
+
+        Ray aimRay = GetInteractionRay();
+
+        DrawCastGizmo(
+            aimRay,
+            pickupDistance,
+            new Color(0.2f, 1f, 0.2f, 0.9f));
+        DrawCastGizmo(
+            aimRay,
+            magnetDistance,
+            new Color(0.1f, 0.8f, 1f, 0.55f));
+    }
+
+    private void DrawCastGizmo(Ray ray, float distance, Color color)
+    {
+        Vector3 end = ray.origin + ray.direction * distance;
+
+        Gizmos.color = color;
+        Gizmos.DrawLine(ray.origin, end);
     }
 }

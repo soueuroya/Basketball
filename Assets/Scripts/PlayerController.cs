@@ -12,6 +12,7 @@ public class FirstPersonPlayerController : MonoBehaviour
     [Header("Ground Check")]
     [SerializeField] private LayerMask groundLayers = ~0;
     [SerializeField] private float groundCheckDistance = 0.15f;
+    [SerializeField, Min(0f)] private float jumpUngroundedTime = 0.1f;
 
     [Header("Air Time Slow Motion")]
     [SerializeField, Range(0.05f, 1f)] private float airborneTimeScale = 0.65f;
@@ -27,6 +28,7 @@ public class FirstPersonPlayerController : MonoBehaviour
     private float jumpBufferCounter;
     private bool isGrounded;
     private float defaultFixedDeltaTime;
+    private float ignoreGroundUntil;
 
     private void Awake()
     {
@@ -96,25 +98,45 @@ public class FirstPersonPlayerController : MonoBehaviour
 
             body.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
             jumpBufferCounter = 0f;
+            isGrounded = false;
+            ignoreGroundUntil = Time.unscaledTime + jumpUngroundedTime;
         }
     }
 
     private void CheckGround()
     {
+        if (Time.unscaledTime < ignoreGroundUntil)
+        {
+            isGrounded = false;
+            return;
+        }
+
         Vector3 center = transform.TransformPoint(capsule.center);
         float radius = capsule.radius * 0.9f;
         float halfHeight = Mathf.Max(capsule.height * 0.5f, radius);
         Vector3 origin = center + Vector3.down * (halfHeight - radius);
 
-        isGrounded = Physics.SphereCast(
+        RaycastHit[] hits = Physics.SphereCastAll(
             origin,
             radius,
             Vector3.down,
-            out _,
             groundCheckDistance,
             groundLayers,
             QueryTriggerInteraction.Ignore
         );
+
+        isGrounded = false;
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider.transform.root == transform.root)
+            {
+                continue;
+            }
+
+            isGrounded = true;
+            break;
+        }
     }
 
     private void ApplyThrowAirHang()

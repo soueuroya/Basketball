@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6997573099933499893}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: BasketballAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 1584523031712413621}
   - component: {fileID: 1266085426481508562}
   - component: {fileID: 4442411666428454073}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -216,7 +216,7 @@ GameObject:
   - component: {fileID: 5759798245989474405}
   - component: {fileID: 1821136604248591135}
   - component: {fileID: 552663043405750596}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4481029564942581986}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: b805735e69a135449a3638ed695a823a, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -277,10 +277,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   jumpForce: 5
+  jumpBufferTime: 0.15
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
   groundCheckDistance: 0.15
+  jumpUngroundedTime: 0.1
+  airborneTimeScale: 0.65
+  timeScaleTransitionSpeed: 3
+  ballHandler: {fileID: 0}
+  throwGravityMultiplier: 0.2
 --- !u!54 &552663043405750596
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -289,7 +295,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4481029564942581986}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 100
   m_Drag: 0.1
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -307,7 +313,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!1 &4925109817325159729
 GameObject:
   m_ObjectHideFlags: 0
@@ -319,7 +325,7 @@ GameObject:
   - component: {fileID: 8924437642609416339}
   - component: {fileID: 1981681013615237933}
   - component: {fileID: 6775631829720741203}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Arms
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -377,24 +383,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2727bdd9a0b29f14fa51e3a17fcddef6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cinemachineCamera: {fileID: 0}
+  cinemachineCamera: {fileID: 6069733287090711343}
   playerCamera: {fileID: 8482505107757041354}
   playerAim: {fileID: 2526055326162090011}
   ballHoldPoint: {fileID: 6997573099933499893}
   anim: {fileID: 1981681013615237933}
+  playerRigidbody: {fileID: 552663043405750596}
   pickupDistance: 3
-  pickupRadius: 0.45
   pickupLayers:
     serializedVersion: 2
-    m_Bits: 1
-  maxChargeTime: 2
-  shootForwardSpeed: 2.5
-  maxShootForwardSpeed: 7
-  shootUpwardSpeed: 4.5
+    m_Bits: 64
+  maxChargeTime: 1.5
+  shootForwardSpeed: 3
+  maxShootForwardSpeed: 7.5
+  shootUpwardSpeed: 4
   maxShootUpwardSpeed: 6
-  throwReleaseDelay: 0.5
+  throwReleaseDelay: 0.35
+  playerVelocityTransfer: 0.5
+  magnetDistance: 50
+  magnetAcceleration: 20
+  magnetMaxSpeed: 10
+  drawInteractionGizmos: 1
   normalFieldOfView: 70
-  chargedFieldOfView: 65
+  chargedFieldOfView: 60
+  fieldOfViewReturnDuration: 0.25
   perlinNoise: {fileID: 2514419951459371544}
 --- !u!1 &8868991679601935006
 GameObject:
@@ -408,7 +420,7 @@ GameObject:
   - component: {fileID: 6069733287090711343}
   - component: {fileID: 2514419951459371544}
   - component: {fileID: 206660523559061825}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CinemachineCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -488,7 +500,7 @@ MonoBehaviour:
   NoiseProfile: {fileID: 11400000, guid: 69ce8388f6785dd4c8c39915efece2f4, type: 2}
   PivotOffset: {x: 0, y: -0.5, z: 0}
   AmplitudeGain: 0
-  FrequencyGain: 0.03
+  FrequencyGain: 0.01
   m_NoiseOffsets: {x: 0, y: 0, z: 0}
 --- !u!114 &206660523559061825
 MonoBehaviour:
@@ -502,7 +514,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: babd555937a0d254f9ae5ff449d5a2f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 2
+  mouseSensitivity: 3
   maxLookAngle: 90
   playerBody: {fileID: 5047248198388180599}
 --- !u!1 &9071117985060640201
@@ -514,7 +526,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2526055326162090011}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: AimOffset
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -529,13 +541,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9071117985060640201}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.03925978, z: 0, w: 0.9992291}
+  m_LocalRotation: {x: 0, y: -0.027921675, z: 0, w: 0.9996101}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8924437642609416339}
-  m_LocalEulerAnglesHint: {x: 0, y: -4.5, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -3.2, z: 0}
 --- !u!1001 &5131823760355995848
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -584,9 +596,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 38.538
       objectReference: {fileID: 0}
+    - target: {fileID: -3217201047580286253, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
       propertyPath: m_Name
       value: rightArmLow
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
       propertyPath: m_IsActive
@@ -666,9 +686,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 38.538
       objectReference: {fileID: 0}
+    - target: {fileID: -3217201047580286253, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
       propertyPath: m_Name
       value: leftArmLow
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8ff93b639bbe3ba4f8172d517a345394, type: 3}
       propertyPath: m_IsActive
