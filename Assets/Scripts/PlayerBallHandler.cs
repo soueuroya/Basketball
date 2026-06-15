@@ -14,6 +14,7 @@ public class PlayerBallHandler : MonoBehaviour
 
     [Header("Ball Interaction")]
     [SerializeField, Min(0.1f)] private float pickupDistance = 3f;
+    [SerializeField, Range(0.01f, 0.5f)] private float crosshairTargetRadius = 0.12f;
     [SerializeField] private LayerMask pickupLayers = ~0;
     [SerializeField, Min(0.1f)] private float maxChargeTime = 2f;
     [SerializeField, Min(0f)] private float shootForwardSpeed = 8f;
@@ -178,31 +179,51 @@ public class PlayerBallHandler : MonoBehaviour
 
     private Ball FindLookedAtBall(float distance)
     {
-        if (heldBall != null || (playerAim == null && playerCamera == null))
+        if (heldBall != null || playerCamera == null)
         {
             return null;
         }
 
-        RaycastHit[] hits = Physics.RaycastAll(
-            GetInteractionRay(),
+        Collider[] colliders = Physics.OverlapSphere(
+            playerCamera.transform.position,
             distance,
             pickupLayers,
             QueryTriggerInteraction.Ignore);
-        System.Array.Sort(
-            hits,
-            (first, second) => first.distance.CompareTo(second.distance));
 
-        foreach (RaycastHit hit in hits)
+        Ball bestBall = null;
+        float bestScreenDistance = float.PositiveInfinity;
+        Vector2 screenCenter = new Vector2(0.5f, 0.5f);
+
+        foreach (Collider candidate in colliders)
         {
-            Ball ball = hit.collider.GetComponentInParent<Ball>();
+            Ball ball = candidate.GetComponentInParent<Ball>();
 
-            if (ball != null && !ball.IsHeld)
+            if (ball == null || ball.IsHeld || ball == bestBall)
             {
-                return ball;
+                continue;
+            }
+
+            Vector3 viewportPoint =
+                playerCamera.WorldToViewportPoint(ball.transform.position);
+
+            if (viewportPoint.z <= 0f)
+            {
+                continue;
+            }
+
+            float screenDistance = Vector2.Distance(
+                screenCenter,
+                new Vector2(viewportPoint.x, viewportPoint.y));
+
+            if (screenDistance <= crosshairTargetRadius &&
+                screenDistance < bestScreenDistance)
+            {
+                bestBall = ball;
+                bestScreenDistance = screenDistance;
             }
         }
 
-        return null;
+        return bestBall;
     }
 
     private Ray GetInteractionRay()

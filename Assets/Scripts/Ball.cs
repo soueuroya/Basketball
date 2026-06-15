@@ -6,9 +6,22 @@ public class Ball : MonoBehaviour
     [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField, Min(0f)] private float trailSpeedThreshold = 8f;
 
+    [Header("Collision Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField, MinMaxSlider(0f, 1f)]
+    private Vector2 randomVolumeModifier = new Vector2(0.85f, 1f);
+    [SerializeField, MinMaxSlider(0.5f, 1.5f)]
+    private Vector2 randomPitch = new Vector2(0.92f, 1.08f);
+    [SerializeField, MinMaxSlider(0f, 0.2f)]
+    private Vector2 randomStartTime = new Vector2(0f, 0.03f);
+    [SerializeField, Min(0f)] private float minimumImpactSpeed = 0.5f;
+    [SerializeField, Min(0.01f)] private float fullVolumeImpactSpeed = 8f;
+    [SerializeField, Min(0f)] private float impactSoundCooldown = 0.06f;
+
     private Rigidbody ballRigidbody;
     private Collider[] ballColliders;
     private Transform holdPoint;
+    private float nextImpactSoundTime;
 
     public bool IsHeld { get; private set; }
 
@@ -20,6 +33,11 @@ public class Ball : MonoBehaviour
         if (trailRenderer == null)
         {
             trailRenderer = GetComponentInChildren<TrailRenderer>();
+        }
+
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
         }
 
         SetTrailEmission(false, true);
@@ -100,6 +118,51 @@ public class Ball : MonoBehaviour
         ballRigidbody.linearVelocity = Vector3.ClampMagnitude(
             ballRigidbody.linearVelocity,
             maxSpeed);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (IsHeld ||
+            audioSource == null ||
+            audioSource.clip == null ||
+            Time.unscaledTime < nextImpactSoundTime ||
+            ShouldIgnoreCollisionAudio(collision.collider))
+        {
+            return;
+        }
+
+        float impactSpeed = collision.relativeVelocity.magnitude;
+
+        if (impactSpeed < minimumImpactSpeed)
+        {
+            return;
+        }
+
+        float collisionVolume = Mathf.InverseLerp(
+            minimumImpactSpeed,
+            fullVolumeImpactSpeed,
+            impactSpeed);
+        float randomModifier = Random.Range(
+            randomVolumeModifier.x,
+            randomVolumeModifier.y);
+
+        nextImpactSoundTime = Time.unscaledTime + impactSoundCooldown;
+        audioSource.pitch = Random.Range(randomPitch.x, randomPitch.y);
+        audioSource.volume = collisionVolume * randomModifier;
+        audioSource.time = Mathf.Min(
+            Random.Range(randomStartTime.x, randomStartTime.y),
+            Mathf.Max(0f, audioSource.clip.length - 0.01f));
+        audioSource.Play();
+    }
+
+    private bool ShouldIgnoreCollisionAudio(Collider other)
+    {
+        if (other.GetComponentInParent<Ball>() != null)
+        {
+            return true;
+        }
+
+        return other.GetComponentInParent<FirstPersonPlayerController>() != null;
     }
 
     private void SetTrailEmission(bool shouldEmit, bool clear = false)

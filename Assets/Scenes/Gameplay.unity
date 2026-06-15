@@ -127,10 +127,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball (8)
@@ -188,10 +184,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball (1)
@@ -306,10 +298,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball (5)
@@ -367,10 +355,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -428,10 +412,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -538,10 +518,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball (2)
@@ -674,10 +650,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -958,10 +930,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1212,10 +1180,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball (4)
@@ -1273,10 +1237,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1378,6 +1338,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7581642724152585174, guid: a076e1971518a5a41b08d2710e264511, type: 3}
+      propertyPath: rolloffMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7807386220113158269, guid: a076e1971518a5a41b08d2710e264511, type: 3}
+      propertyPath: randomVolumeModifier.y
+      value: 0.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1391,10 +1359,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1452,10 +1416,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1513,10 +1473,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1574,10 +1530,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7850920051865015716, guid: a076e1971518a5a41b08d2710e264511, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 13400000, guid: d463ceb8871fc6b4aa386cf967d56bca, type: 2}
     - target: {fileID: 5797309958622591150, guid: a076e1971518a5a41b08d2710e264511, type: 3}
       propertyPath: m_Name
       value: Basketball ball
@@ -1692,6 +1644,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1821136604248591135, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: airborneTimeScale
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 1821136604248591135, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: timeScaleTransitionSpeed
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 4481029564942581986, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: m_Name
       value: Player
@@ -1739,6 +1699,14 @@ PrefabInstance:
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: pickupDistance
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: throwReleaseDelay
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: playerVelocityTransfer
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
