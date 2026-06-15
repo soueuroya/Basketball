@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerBallHandler : MonoBehaviour
 {
     [Header("References")]
+    [SerializeField] private CinemachineCamera cinemachineCamera;
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Transform playerAim;
     [SerializeField] private Transform ballHoldPoint;
@@ -21,13 +22,25 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField, Min(0f)] private float maxShootUpwardSpeed = 7f;
     [SerializeField, Min(0f)] private float throwReleaseDelay = 0.5f;
 
+    [Header("Ball Magnet")]
+    [SerializeField, Min(0.1f)] private float magnetDistance = 15f;
+    [SerializeField, Min(0f)] private float magnetAcceleration = 25f;
+    [SerializeField, Min(0f)] private float magnetMaxSpeed = 10f;
+
+    [Header("Charge Camera")]
+    [SerializeField, Min(1f)] private float normalFieldOfView = 70f;
+    [SerializeField, Min(1f)] private float chargedFieldOfView = 65f;
+    [SerializeField, Min(0.01f)] private float fieldOfViewReturnDuration = 0.35f;
+
     [SerializeField] CinemachineBasicMultiChannelPerlin perlinNoise;
 
     private Ball heldBall;
     private Ball reachableBall;
+    private Ball targetedBall;
     private bool isCharging;
     private bool isThrowing;
     private float chargeStartedAt;
+    private Coroutine fieldOfViewReturnCoroutine;
 
     public bool HasBall => heldBall != null;
 
@@ -42,6 +55,8 @@ public class PlayerBallHandler : MonoBehaviour
         {
             anim = GetComponent<Animator>();
         }
+
+        SetCameraFieldOfView(normalFieldOfView);
     }
 
     private void Update()
@@ -59,14 +74,40 @@ public class PlayerBallHandler : MonoBehaviour
             return;
         }
 
+        UpdateBallMagnet();
+
         if (Input.GetMouseButtonDown(0) && reachableBall != null)
         {
             PickUp(reachableBall);
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (heldBall == null &&
+            targetedBall != null &&
+            Input.GetMouseButton(1))
+        {
+            Transform target = ballHoldPoint != null ? ballHoldPoint : transform;
+            targetedBall.AttractTowards(
+                target.position,
+                magnetAcceleration,
+                magnetMaxSpeed);
+        }
+    }
+
     private void UpdateThrowInput()
     {
+        if (isCharging)
+        {
+            float chargeAmount = Mathf.Clamp01(
+                (Time.time - chargeStartedAt) / maxChargeTime);
+            SetCameraFieldOfView(Mathf.Lerp(
+                normalFieldOfView,
+                chargedFieldOfView,
+                chargeAmount));
+        }
+
         if (!isThrowing && Input.GetMouseButtonDown(0))
         {
             StartCharging();
@@ -82,6 +123,12 @@ public class PlayerBallHandler : MonoBehaviour
 
     private void StartCharging()
     {
+        if (fieldOfViewReturnCoroutine != null)
+        {
+            StopCoroutine(fieldOfViewReturnCoroutine);
+            fieldOfViewReturnCoroutine = null;
+        }
+
         isCharging = true;
         chargeStartedAt = Time.time;
 
@@ -93,24 +140,23 @@ public class PlayerBallHandler : MonoBehaviour
 
     private void UpdateReachableBall()
     {
+        bool keepMagnetTarget =
+            Input.GetMouseButton(1) &&
+            targetedBall != null &&
+            !targetedBall.IsHeld;
+
+        if (!keepMagnetTarget)
+        {
+            targetedBall = FindLookedAtBall(magnetDistance);
+        }
+
         Ball nextBall = null;
 
-        if (heldBall == null && playerCamera != null &&
-            Physics.SphereCast(
-                playerCamera.transform.position,
-                pickupRadius,
-                playerCamera.transform.forward,
-                out RaycastHit hit,
-                pickupDistance,
-                pickupLayers,
-                QueryTriggerInteraction.Ignore))
+        if (targetedBall != null &&
+            Vector3.Distance(transform.position, targetedBall.transform.position) <=
+            pickupDistance)
         {
-            nextBall = hit.collider.GetComponentInParent<Ball>();
-
-            if (nextBall != null && nextBall.IsHeld)
-            {
-                nextBall = null;
-            }
+            nextBall = targetedBall;
         }
 
         reachableBall = nextBall;
@@ -118,6 +164,57 @@ public class PlayerBallHandler : MonoBehaviour
         if (anim != null)
         {
             anim.SetBool("OnReach", reachableBall != null);
+        }
+    }
+
+    private Ball FindLookedAtBall(float distance)
+    {
+        if (heldBall != null || playerCamera == null)
+        {
+            return null;
+        }
+
+        if (!Physics.SphereCast(
+                playerCamera.transform.position,
+                pickupRadius,
+                playerCamera.transform.forward,
+                out RaycastHit hit,
+                distance,
+                pickupLayers,
+                QueryTriggerInteraction.Ignore))
+        {
+            return null;
+        }
+
+        Ball ball = hit.collider.GetComponentInParent<Ball>();
+        return ball != null && !ball.IsHeld ? ball : null;
+    }
+
+    private void UpdateBallMagnet()
+    {
+        bool isCalling =
+            heldBall == null &&
+            Input.GetMouseButton(1) &&
+            targetedBall != null;
+
+        if (anim != null)
+        {
+            anim.SetBool("Calling", isCalling);
+        }
+
+        if (!isCalling)
+        {
+            return;
+        }
+
+        Transform target = ballHoldPoint != null ? ballHoldPoint : transform;
+        float pickupSqrDistance = pickupDistance * pickupDistance;
+
+        if ((targetedBall.transform.position - target.position).sqrMagnitude <=
+            pickupSqrDistance)
+        {
+            PickUp(targetedBall);
+            targetedBall = null;
         }
     }
 
@@ -130,6 +227,7 @@ public class PlayerBallHandler : MonoBehaviour
         if (anim != null)
         {
             anim.SetBool("OnReach", false);
+            anim.SetBool("Calling", false);
             anim.SetTrigger("Pickup");
         }
     }
@@ -139,13 +237,14 @@ public class PlayerBallHandler : MonoBehaviour
     {
         Ball ballToShoot = heldBall;
         isCharging = false;
+        StartFieldOfViewReturn();
 
         if (anim != null)
         {
             anim.SetTrigger("Shoot");
         }
 
-        perlinNoise.AmplitudeGain = 1 + (chargeAmount * 3);
+        //perlinNoise.AmplitudeGain = 1 + (chargeAmount * 2);
          
         Vector3 aimDirection = playerAim != null
             ? playerAim.transform.forward
@@ -179,15 +278,66 @@ public class PlayerBallHandler : MonoBehaviour
         isThrowing = false;
     }
 
+    private void SetCameraFieldOfView(float fieldOfView)
+    {
+        if (cinemachineCamera == null)
+        {
+            return;
+        }
+
+        LensSettings lens = cinemachineCamera.Lens;
+        lens.FieldOfView = fieldOfView;
+        cinemachineCamera.Lens = lens;
+    }
+
+    private void StartFieldOfViewReturn()
+    {
+        if (cinemachineCamera == null)
+        {
+            return;
+        }
+
+        if (fieldOfViewReturnCoroutine != null)
+        {
+            StopCoroutine(fieldOfViewReturnCoroutine);
+        }
+
+        fieldOfViewReturnCoroutine = StartCoroutine(ReturnFieldOfView());
+    }
+
+    private IEnumerator ReturnFieldOfView()
+    {
+        float startingFieldOfView = cinemachineCamera.Lens.FieldOfView;
+        float elapsed = 0f;
+
+        while (elapsed < fieldOfViewReturnDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / fieldOfViewReturnDuration);
+            SetCameraFieldOfView(Mathf.Lerp(
+                startingFieldOfView,
+                normalFieldOfView,
+                progress));
+            yield return null;
+        }
+
+        SetCameraFieldOfView(normalFieldOfView);
+        fieldOfViewReturnCoroutine = null;
+    }
+
     private void OnDisable()
     {
         isCharging = false;
         isThrowing = false;
         reachableBall = null;
+        targetedBall = null;
+        fieldOfViewReturnCoroutine = null;
+        SetCameraFieldOfView(normalFieldOfView);
 
         if (anim != null)
         {
             anim.SetBool("OnReach", false);
+            anim.SetBool("Calling", false);
         }
     }
 }

@@ -80,6 +80,28 @@ public class Ball : MonoBehaviour
         ballRigidbody.linearVelocity = velocity;
     }
 
+    public void AttractTowards(Vector3 target, float acceleration, float maxSpeed)
+    {
+        if (IsHeld || ballRigidbody.isKinematic)
+        {
+            return;
+        }
+
+        Vector3 direction = target - transform.position;
+
+        if (direction.sqrMagnitude <= Mathf.Epsilon)
+        {
+            return;
+        }
+
+        ballRigidbody.AddForce(
+            direction.normalized * acceleration,
+            ForceMode.Acceleration);
+        ballRigidbody.linearVelocity = Vector3.ClampMagnitude(
+            ballRigidbody.linearVelocity,
+            maxSpeed);
+    }
+
     private void SetTrailEmission(bool shouldEmit, bool clear = false)
     {
         if (trailRenderer == null)
