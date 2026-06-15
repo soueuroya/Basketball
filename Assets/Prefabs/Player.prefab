@@ -259,18 +259,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  groundDrag: 5
   jumpForce: 5
-  jumpCooldown: 0.25
-  airMultiplier: 0.4
-  acceleration: 20
-  deceleration: 25
-  playerHeight: 2
-  groundLayer:
+  groundLayers:
     serializedVersion: 2
-    m_Bits: 1
-  groundCheckRadius: 0.25
-  groundCheckOffset: 0.1
+    m_Bits: 4294967295
+  groundCheckDistance: 0.15
 --- !u!54 &552663043405750596
 Rigidbody:
   m_ObjectHideFlags: 0

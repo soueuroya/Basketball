@@ -1,142 +1,95 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
+public class FirstPersonPlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float groundDrag = 5f;
-    [SerializeField] private float jumpForce = 5f;
-    [SerializeField] private float jumpCooldown = 0.25f;
-    [SerializeField] private float airMultiplier = 0.4f;
-    [SerializeField] private float acceleration = 20f; // how fast we reach target speed on ground
-    [SerializeField] private float deceleration = 25f; // how fast we stop when no input
-    
-    [Header("Ground Check")]
-    [SerializeField] private float playerHeight = 2f;
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float groundCheckRadius = 0.25f;
-    [SerializeField] private float groundCheckOffset = 0.1f;
-    private bool isGrounded;
-    
-    private float horizontalInput;
-    private float verticalInput;
-    private bool jumpInput;
-    private float jumpCooldownCounter;
-    
-    private Rigidbody rb;
-    private Vector3 moveDirection;
+    [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float jumpForce = 6f;
 
-    private void Start()
+    [Header("Ground Check")]
+    [SerializeField] private LayerMask groundLayers = ~0;
+    [SerializeField] private float groundCheckDistance = 0.15f;
+
+    private Rigidbody body;
+    private CapsuleCollider capsule;
+    private Vector2 moveInput;
+    private bool jumpRequested;
+    private bool isGrounded;
+
+    private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            Debug.LogError("PlayerController requires a Rigidbody component!");
-        }
-        // Recommended Rigidbody setup: freeze rotation X/Z in inspector
+        body = GetComponent<Rigidbody>();
+        capsule = GetComponent<CapsuleCollider>();
+
+        body.freezeRotation = true;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        body.collisionDetectionMode = CollisionDetectionMode.Continuous;
     }
 
     private void Update()
     {
-        // Robust ground check using CheckSphere at player's feet
-        Vector3 checkPos = transform.position + Vector3.down * (playerHeight * 0.5f - groundCheckOffset);
-        isGrounded = Physics.CheckSphere(checkPos, groundCheckRadius, groundLayer);
+        moveInput = new Vector2(
+            Input.GetAxisRaw("Horizontal"),
+            Input.GetAxisRaw("Vertical")
+        ).normalized;
 
-        // Get input
-        horizontalInput = Input.GetAxis("Horizontal");
-        verticalInput = Input.GetAxis("Vertical");
-        jumpInput = Input.GetKeyDown(KeyCode.Space);
-
-        // Handle jumping
-        if (jumpInput && isGrounded && jumpCooldownCounter <= 0f)
+        if (Input.GetButtonDown("Jump"))
         {
-            Jump();
-            jumpCooldownCounter = jumpCooldown;
+            jumpRequested = true;
         }
-
-        // Reduce jump cooldown
-        if (jumpCooldownCounter > 0f)
-            jumpCooldownCounter -= Time.deltaTime;
-
-        // Apply drag
-        ApplyDrag();
     }
 
     private void FixedUpdate()
     {
-        MovePlayer();
-        LimitSpeed();
+        CheckGround();
+        Move();
+        Jump();
     }
 
-    private void MovePlayer()
+    private void Move()
     {
-        // Calculate move direction relative to where player is looking
-        moveDirection = transform.forward * verticalInput + transform.right * horizontalInput;
+        Vector3 direction =
+            transform.right * moveInput.x +
+            transform.forward * moveInput.y;
 
-        Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        Vector3 velocity = body.linearVelocity;
+        velocity.x = direction.x * moveSpeed;
+        velocity.z = direction.z * moveSpeed;
 
-        if (isGrounded)
-        {
-            Vector3 targetVel = moveDirection.normalized * moveSpeed;
-
-            // If there's input, accelerate towards target
-            if (moveDirection.sqrMagnitude > 0.001f)
-            {
-                Vector3 newFlat = Vector3.Lerp(flatVel, targetVel, Mathf.Clamp01(acceleration * Time.fixedDeltaTime));
-                rb.linearVelocity = new Vector3(newFlat.x, rb.linearVelocity.y, newFlat.z);
-            }
-            else
-            {
-                // No input: decelerate to zero for snappy stopping
-                Vector3 newFlat = Vector3.Lerp(flatVel, Vector3.zero, Mathf.Clamp01(deceleration * Time.fixedDeltaTime));
-                rb.linearVelocity = new Vector3(newFlat.x, rb.linearVelocity.y, newFlat.z);
-            }
-        }
-        else
-        {
-            // In air, keep gentle air control via AddForce
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
-        }
+        body.linearVelocity = velocity;
     }
 
     private void Jump()
     {
-        // Reset Y velocity before jumping
-        Vector3 velocity = rb.linearVelocity;
-        velocity.y = 0f;
-        rb.linearVelocity = velocity;
-
-        // Add jump force
-        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-    }
-
-    private void ApplyDrag()
-    {
-        if (isGrounded)
-            rb.linearDamping = groundDrag;
-        else
-            rb.linearDamping = 0f;
-    }
-
-    private void LimitSpeed()
-    {
-        Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-
-        // Limit velocity if needed
-        if (flatVel.magnitude > moveSpeed)
+        if (jumpRequested && isGrounded)
         {
-            Vector3 limitedVel = flatVel.normalized * moveSpeed;
-            rb.linearVelocity = new Vector3(limitedVel.x, rb.linearVelocity.y, limitedVel.z);
+            Vector3 velocity = body.linearVelocity;
+            velocity.y = 0f;
+            body.linearVelocity = velocity;
+
+            body.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
         }
+
+        jumpRequested = false;
     }
 
-    public bool IsGrounded => isGrounded;
-
-    private void OnDrawGizmosSelected()
+    private void CheckGround()
     {
-        // Visualize ground check in editor
-        Vector3 checkPos = transform.position + Vector3.down * (playerHeight * 0.5f - groundCheckOffset);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(checkPos, groundCheckRadius);
+        Vector3 center = transform.TransformPoint(capsule.center);
+        float radius = capsule.radius * 0.9f;
+        float halfHeight = Mathf.Max(capsule.height * 0.5f, radius);
+        Vector3 origin = center + Vector3.down * (halfHeight - radius);
+
+        isGrounded = Physics.SphereCast(
+            origin,
+            radius,
+            Vector3.down,
+            out _,
+            groundCheckDistance,
+            groundLayers,
+            QueryTriggerInteraction.Ignore
+        );
     }
 }
