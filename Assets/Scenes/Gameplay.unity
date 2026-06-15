@@ -1055,6 +1055,10 @@ PrefabInstance:
       propertyPath: sensitivitySlider
       value: 
       objectReference: {fileID: 423395202}
+    - target: {fileID: 4906125965596884866, guid: b0b981da6b290b4458402e193b3c9627, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7183141866157394090, guid: b0b981da6b290b4458402e193b3c9627, type: 3}
       propertyPath: m_Pivot.x
       value: 0
