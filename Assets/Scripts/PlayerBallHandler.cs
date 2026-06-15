@@ -4,6 +4,7 @@ public class PlayerBallHandler : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera playerCamera;
+    [SerializeField] private Transform playerAim;
     [SerializeField] private Transform ballHoldPoint;
     [SerializeField] private Animator anim;
 
@@ -24,12 +25,6 @@ public class PlayerBallHandler : MonoBehaviour
         if (playerCamera == null)
         {
             playerCamera = GetComponentInParent<Camera>();
-        }
-
-        if (ballHoldPoint == null)
-        {
-            Transform anchor = transform.Find("BasketballAnchor");
-            ballHoldPoint = anchor != null ? anchor : transform;
         }
 
         if (anim == null)
@@ -100,6 +95,7 @@ public class PlayerBallHandler : MonoBehaviour
         }
     }
 
+    // Shoots/Throws the ball
     private void Shoot()
     {
         Ball ballToShoot = heldBall;
@@ -110,8 +106,8 @@ public class PlayerBallHandler : MonoBehaviour
             anim.SetTrigger("Shoot");
         }
 
-        Vector3 aimDirection = playerCamera != null
-            ? playerCamera.transform.forward
+        Vector3 aimDirection = playerAim != null
+            ? playerAim.transform.forward
             : transform.forward;
 
         Vector3 flatDirection = Vector3.ProjectOnPlane(aimDirection, Vector3.up).normalized;

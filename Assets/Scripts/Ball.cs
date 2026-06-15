@@ -5,6 +5,7 @@ public class Ball : MonoBehaviour
 {
     private Rigidbody ballRigidbody;
     private Collider[] ballColliders;
+    private Transform holdPoint;
 
     public bool IsHeld { get; private set; }
 
@@ -12,6 +13,14 @@ public class Ball : MonoBehaviour
     {
         ballRigidbody = GetComponent<Rigidbody>();
         ballColliders = GetComponentsInChildren<Collider>();
+    }
+
+    private void LateUpdate()
+    {
+        if (IsHeld && holdPoint != null)
+        {
+            transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+        }
     }
 
     public void PickUp(Transform holdPoint)
@@ -22,6 +31,7 @@ public class Ball : MonoBehaviour
         }
 
         IsHeld = true;
+        this.holdPoint = holdPoint;
         ballRigidbody.linearVelocity = Vector3.zero;
         ballRigidbody.angularVelocity = Vector3.zero;
         ballRigidbody.isKinematic = true;
@@ -40,6 +50,7 @@ public class Ball : MonoBehaviour
         }
 
         IsHeld = false;
+        holdPoint = null;
         transform.SetParent(null, true);
         SetCollidersEnabled(true);
         ballRigidbody.isKinematic = false;
