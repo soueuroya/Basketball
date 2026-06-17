@@ -9,7 +9,9 @@ public class CameraController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform playerBody;
 
-    private float xRotation = 0f;
+    private Rigidbody playerRigidbody;
+    private float xRotation;
+    private float yRotation;
 
     private void Start()
     {
@@ -18,14 +20,32 @@ public class CameraController : MonoBehaviour
             playerBody = transform.parent;
         }
 
-        // Lock and hide cursor
-        Cursor.lockState = CursorLockMode.Locked;
+        playerRigidbody = playerBody.GetComponent<Rigidbody>();
+        xRotation = NormalizeAngle(transform.localEulerAngles.x);
+        yRotation = playerBody.eulerAngles.y;
+
+#if !UNITY_WEBGL
+        LockCursor();
+#else
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+#endif
     }
 
     private void Update()
     {
         if (GameplayManager.IsPaused)
         {
+            return;
+        }
+
+        if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                LockCursor();
+            }
+
             return;
         }
 
@@ -37,14 +57,33 @@ public class CameraController : MonoBehaviour
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-        // Rotate player body left/right (Y axis)
-        playerBody.Rotate(Vector3.up * mouseX);
-
-        // Rotate camera up/down (X axis)
+        yRotation += mouseX;
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -maxLookAngle, maxLookAngle);
 
+        Quaternion bodyRotation = Quaternion.Euler(0f, yRotation, 0f);
+
+        if (playerRigidbody != null)
+        {
+            playerRigidbody.rotation = bodyRotation;
+        }
+        else
+        {
+            playerBody.rotation = bodyRotation;
+        }
+
         transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    private void LockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private static float NormalizeAngle(float angle)
+    {
+        return angle > 180f ? angle - 360f : angle;
     }
 
     public void SetMouseSensitivity(float sensitivity)

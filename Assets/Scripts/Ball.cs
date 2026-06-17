@@ -45,7 +45,7 @@ public class Ball : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
         }
 
-        SetTrailEmission(false, true);
+        SetTrailEmission(false, true, true);
     }
 
     private void OnEnable()
@@ -63,8 +63,13 @@ public class Ball : MonoBehaviour
 
     private void Update()
     {
+        if (IsHeld)
+        {
+            SetTrailEmission(false, true, true);
+            return;
+        }
+
         bool shouldEmit =
-            !IsHeld &&
             !ballRigidbody.isKinematic &&
             ballRigidbody.linearVelocity.sqrMagnitude >=
             trailSpeedThreshold * trailSpeedThreshold;
@@ -94,7 +99,7 @@ public class Ball : MonoBehaviour
         ballRigidbody.isKinematic = true;
         ballRigidbody.useGravity = false;
         SetCollidersEnabled(false);
-        SetTrailEmission(false, true);
+        SetTrailEmission(false, true, true);
 
         transform.SetParent(holdPoint, false);
         transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -115,6 +120,7 @@ public class Ball : MonoBehaviour
         ballRigidbody.useGravity = true;
         ballRigidbody.linearVelocity = velocity;
         ballRigidbody.angularVelocity = angularVelocity;
+        SetTrailEmission(false, true);
     }
 
     public void AttractTowards(Vector3 target, float acceleration, float maxSpeed)
@@ -191,11 +197,19 @@ public class Ball : MonoBehaviour
         return other.GetComponentInParent<FirstPersonPlayerController>() != null;
     }
 
-    private void SetTrailEmission(bool shouldEmit, bool clear = false)
+    private void SetTrailEmission(
+        bool shouldEmit,
+        bool clear = false,
+        bool hideRenderer = false)
     {
         if (trailRenderer == null)
         {
             return;
+        }
+
+        if (!hideRenderer && !trailRenderer.enabled)
+        {
+            trailRenderer.enabled = true;
         }
 
         if (isTrailEmitting != shouldEmit)
@@ -207,6 +221,11 @@ public class Ball : MonoBehaviour
         if (clear)
         {
             trailRenderer.Clear();
+        }
+
+        if (hideRenderer && trailRenderer.enabled)
+        {
+            trailRenderer.enabled = false;
         }
     }
 

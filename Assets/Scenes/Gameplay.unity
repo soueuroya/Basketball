@@ -1371,14 +1371,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1821136604248591135, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: airborneTimeScale
-      value: 0.05
-      objectReference: {fileID: 0}
-    - target: {fileID: 1821136604248591135, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: timeScaleTransitionSpeed
-      value: 10
-      objectReference: {fileID: 0}
     - target: {fileID: 4481029564942581986, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
       propertyPath: m_Name
       value: Player
@@ -1424,20 +1416,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: throwBackspin
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: pickupDistance
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: throwReleaseDelay
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
-      propertyPath: playerVelocityTransfer
+      propertyPath: predictionLineColor.a
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: predictionLineColor.b
+      value: 0.7109776
+      objectReference: {fileID: 0}
+    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: predictionLineColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6775631829720741203, guid: c64824b0a294f144a9382560b5a8e977, type: 3}
+      propertyPath: predictionLineColor.r
+      value: 0.6792453
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1456,3 +1448,4 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 1290860401}
   - {fileID: 802914094}
+

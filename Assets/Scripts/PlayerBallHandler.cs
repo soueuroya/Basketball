@@ -12,6 +12,8 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField] private Transform ballHoldPoint;
     [SerializeField] private Animator anim;
     [SerializeField] private Rigidbody playerRigidbody;
+    [SerializeField] private Transform ballStartingPoint;
+    [SerializeField] private LineRenderer shotPredictionLine;
 
     [Header("Ball Interaction")]
     [SerializeField, Min(0.1f)] private float pickupDistance = 3f;
@@ -41,6 +43,14 @@ public class PlayerBallHandler : MonoBehaviour
     [SerializeField, Min(1f)] private float normalFieldOfView = 70f;
     [SerializeField, Min(1f)] private float chargedFieldOfView = 65f;
     [SerializeField, Min(0.01f)] private float fieldOfViewReturnDuration = 0.35f;
+
+    [Header("Shot Prediction")]
+    [SerializeField, Min(2)] private int predictionPointCount = 32;
+    [SerializeField, Min(0.02f)] private float predictionTimeStep = 0.08f;
+    [SerializeField, Min(0.001f)] private float predictionLineWidth = 0.035f;
+    [SerializeField] private Color predictionLineColor = new Color(0.2f, 0.9f, 1f, 0.85f);
+    [SerializeField, Min(0f)] private float predictionCollisionRadius = 0.12f;
+    [SerializeField] private LayerMask predictionCollisionLayers = ~0;
 
     [SerializeField] CinemachineBasicMultiChannelPerlin perlinNoise;
 
@@ -77,12 +87,15 @@ public class PlayerBallHandler : MonoBehaviour
 
         ResetAnimatorTriggers();
         SetCameraFieldOfView(normalFieldOfView);
+        InitializeShotPredictionLine();
+        HideShotPrediction();
     }
 
     private void Update()
     {
         if (GameplayManager.IsPaused)
         {
+            HideShotPrediction();
             return;
         }
 
@@ -131,6 +144,7 @@ public class PlayerBallHandler : MonoBehaviour
                 normalFieldOfView,
                 chargedFieldOfView,
                 chargeAmount));
+            UpdateShotPrediction(chargeAmount);
         }
 
         if (!isThrowing && Input.GetMouseButtonDown(0))
@@ -156,6 +170,7 @@ public class PlayerBallHandler : MonoBehaviour
 
         isCharging = true;
         chargeStartedAt = Time.time;
+        UpdateShotPrediction(0f);
 
         if (anim != null)
         {
@@ -294,6 +309,7 @@ public class PlayerBallHandler : MonoBehaviour
     {
         Ball ballToShoot = heldBall;
         isCharging = false;
+        HideShotPrediction();
         StartFieldOfViewReturn();
 
         if (anim != null)
@@ -303,30 +319,8 @@ public class PlayerBallHandler : MonoBehaviour
 
         //perlinNoise.AmplitudeGain = 1 + (chargeAmount * 2);
          
-        Vector3 aimDirection = playerAim != null
-            ? playerAim.transform.forward
-            : transform.forward;
-
-        float forwardSpeed = Mathf.Lerp(
-            shootForwardSpeed,
-            maxShootForwardSpeed,
-            chargeAmount);
-        float upwardSpeed = Mathf.Lerp(
-            shootUpwardSpeed,
-            maxShootUpwardSpeed,
-            chargeAmount);
-        Vector3 flatDirection = Vector3.ProjectOnPlane(aimDirection, Vector3.up).normalized;
-        float cameraPitchInfluence = aimDirection.y * forwardSpeed;
-        Vector3 shotVelocity =
-            flatDirection * forwardSpeed +
-            Vector3.up * (upwardSpeed + cameraPitchInfluence);
-
-        if (playerRigidbody != null)
-        {
-            shotVelocity += playerRigidbody.linearVelocity * playerVelocityTransfer;
-        }
-
         isThrowing = true;
+        Vector3 shotVelocity = CalculateShotVelocity(chargeAmount);
         Vector3 angularVelocity = transform.right * -throwBackspin;
         StartCoroutine(ReleaseBallAfterDelay(
             ballToShoot,
@@ -341,6 +335,18 @@ public class PlayerBallHandler : MonoBehaviour
     {
         yield return new WaitForSeconds(throwReleaseDelay);
 
+        if (ball == null)
+        {
+            heldBall = null;
+            isThrowing = false;
+            yield break;
+        }
+
+        if (ballStartingPoint != null)
+        {
+            ball.transform.position = ballStartingPoint.position;
+        }
+
         ball.Release(velocity, angularVelocity);
         heldBall = null;
 
@@ -350,6 +356,168 @@ public class PlayerBallHandler : MonoBehaviour
         }
 
         isThrowing = false;
+    }
+
+    private Vector3 CalculateShotVelocity(float chargeAmount)
+    {
+        Vector3 aimDirection = playerAim != null
+            ? playerAim.transform.forward
+            : transform.forward;
+
+        float forwardSpeed = Mathf.Lerp(
+            shootForwardSpeed,
+            maxShootForwardSpeed,
+            chargeAmount);
+        float upwardSpeed = Mathf.Lerp(
+            shootUpwardSpeed,
+            maxShootUpwardSpeed,
+            chargeAmount);
+        Vector3 flatDirection = Vector3.ProjectOnPlane(
+            aimDirection,
+            Vector3.up).normalized;
+        float cameraPitchInfluence = aimDirection.y * forwardSpeed;
+        Vector3 shotVelocity =
+            flatDirection * forwardSpeed +
+            Vector3.up * (upwardSpeed + cameraPitchInfluence);
+
+        if (playerRigidbody != null)
+        {
+            shotVelocity +=
+                playerRigidbody.linearVelocity * playerVelocityTransfer;
+        }
+
+        return shotVelocity;
+    }
+
+    private void InitializeShotPredictionLine()
+    {
+        if (shotPredictionLine == null)
+        {
+            GameObject predictionObject = new GameObject("Shot Prediction Line");
+            predictionObject.transform.SetParent(transform, false);
+            shotPredictionLine = predictionObject.AddComponent<LineRenderer>();
+
+            shotPredictionLine.useWorldSpace = true;
+            shotPredictionLine.startWidth = predictionLineWidth;
+            shotPredictionLine.endWidth = predictionLineWidth;
+            shotPredictionLine.numCapVertices = 6;
+            shotPredictionLine.numCornerVertices = 6;
+            shotPredictionLine.shadowCastingMode =
+                UnityEngine.Rendering.ShadowCastingMode.Off;
+            shotPredictionLine.receiveShadows = false;
+
+            if (shotPredictionLine.sharedMaterial == null)
+            {
+                shotPredictionLine.sharedMaterial =
+                    new Material(Shader.Find("Sprites/Default"));
+            }
+
+            shotPredictionLine.startColor = predictionLineColor;
+            shotPredictionLine.endColor = predictionLineColor;
+        }
+
+        shotPredictionLine.positionCount = 0;
+    }
+
+    private void UpdateShotPrediction(float chargeAmount)
+    {
+        if (shotPredictionLine == null)
+        {
+            return;
+        }
+
+        Transform startTransform = ballStartingPoint != null
+            ? ballStartingPoint
+            : ballHoldPoint;
+
+        if (!isCharging || heldBall == null || startTransform == null)
+        {
+            HideShotPrediction();
+            return;
+        }
+
+        Vector3 startPosition = startTransform.position;
+        Vector3 velocity = CalculateShotVelocity(chargeAmount);
+        Vector3 gravity = Physics.gravity;
+
+        shotPredictionLine.enabled = true;
+        shotPredictionLine.positionCount = 1;
+        shotPredictionLine.SetPosition(0, startPosition);
+
+        Vector3 previousPoint = startPosition;
+
+        for (int i = 1; i < predictionPointCount; i++)
+        {
+            float time = i * predictionTimeStep;
+            Vector3 point =
+                startPosition +
+                velocity * time +
+                0.5f * gravity * time * time;
+
+            Vector3 segment = point - previousPoint;
+            float segmentDistance = segment.magnitude;
+
+            if (segmentDistance <= Mathf.Epsilon)
+            {
+                continue;
+            }
+
+            if (CastShotPredictionSegment(
+                    previousPoint,
+                    segment / segmentDistance,
+                    segmentDistance,
+                    out RaycastHit hit))
+            {
+                shotPredictionLine.positionCount = i + 1;
+                shotPredictionLine.SetPosition(i, hit.point);
+                return;
+            }
+
+            shotPredictionLine.positionCount = i + 1;
+            shotPredictionLine.SetPosition(i, point);
+            previousPoint = point;
+        }
+    }
+
+    private bool CastShotPredictionSegment(
+        Vector3 origin,
+        Vector3 direction,
+        float distance,
+        out RaycastHit hit)
+    {
+        int collisionMask =
+            predictionCollisionLayers.value & ~(1 << gameObject.layer);
+
+        if (predictionCollisionRadius > 0f)
+        {
+            return Physics.SphereCast(
+                origin,
+                predictionCollisionRadius,
+                direction,
+                out hit,
+                distance,
+                collisionMask,
+                QueryTriggerInteraction.Ignore);
+        }
+
+        return Physics.Raycast(
+            origin,
+            direction,
+            out hit,
+            distance,
+            collisionMask,
+            QueryTriggerInteraction.Ignore);
+    }
+
+    private void HideShotPrediction()
+    {
+        if (shotPredictionLine == null)
+        {
+            return;
+        }
+
+        shotPredictionLine.enabled = false;
+        shotPredictionLine.positionCount = 0;
     }
 
     private void SetCameraFieldOfView(float fieldOfView)
@@ -438,6 +606,7 @@ public class PlayerBallHandler : MonoBehaviour
         reachableBall = null;
         targetedBall = null;
         fieldOfViewReturnCoroutine = null;
+        HideShotPrediction();
         SetCameraFieldOfView(normalFieldOfView);
 
         if (anim != null)
